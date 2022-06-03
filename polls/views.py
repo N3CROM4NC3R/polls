@@ -1,62 +1,56 @@
 from django.shortcuts import render, get_object_or_404, get_list_or_404
-from django.http import HttpResponse,Http404
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
+from django.urls import reverse
+from django.views import generic
 
-from .models import Question
+import logging
+
+
+
+from .models import Question, Choice
 
 # Create your views here.
 
+class IndexView(generic.ListView):
+    template_name="polls/index.html"
+    context_object_name = "latest_question_list"
 
-def index(request):
+    def get_queryset(self):
+        return Question.objects.order_by("-pub_date")[:5]
 
-    #latest_question_list = Question.objects.order_by('-pub_date')[:5]
-    #output = "<br/> ".join([q.question_text for q in latest_question_list])
+
+class DetailView(generic.DetailView):
+    template_name="polls/detail.html"
+    model = Question
     
-    latest_question_list = get_list_or_404(Question.objects.order_by("-pub_date"))[:5]
-
-    template = loader.get_template('polls/index.html')
-
-    context = {
-        'latest_question_list':latest_question_list
-    }
-    output = template.render(context, request)
-
-    return HttpResponse(output)
-    
-def detail(request, question_id):
-
-    question = get_object_or_404(Question, pk=question_id)
-    context = {'question':question}
-
-    return render(request, 'polls/detail.html', context)
-
-def results(request, question_id):
-    template = loader.get_template("polls/results.html")
-
-    question = get_object_or_404(Question,pk=question_id)
-
-    context = {
-        'question':question
-    }
-    output = template.render(context, request)
-
-    return HttpResponse(output)
+class ResultsView(generic.DetailView):
+    template_name="polls/results.html"
+    model = Question
 
 def vote(request, question_id):
 
-    """ question = get_object_or_404(Question, pk=question_id)
-
-
-    template = loader.get_template("polls/vote.html")
-    context = {
-        'question':question
-    }
     
-    
-    output = template.render(context, request)
 
-    return HttpResponse(output) """
-    question = get_o
+    question = get_object_or_404(Question, pk=question_id)  
+    try:
+        
+        selected_choice = question.choice_set.get(pk=request.POST["choice"])
+        
+    except(KeyError, Choice.DoesNotExist):
+
+        error = {
+            "question":question,
+            "error_message":"You didn't select any choice"
+        }
+
+        return render(request, "polls/details.html", error)
+
+    else:
+        selected_choice.votes += 1
+        selected_choice.save()
+
+        return HttpResponseRedirect(reverse("polls:results",args=(question.id,)))
 
 
 
