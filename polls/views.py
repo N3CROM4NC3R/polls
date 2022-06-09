@@ -4,6 +4,7 @@ from django.template import loader
 from django.urls import reverse
 from django.views import generic
 from django.utils import timezone
+from django.db.models import Count
 
 
 from .models import Question, Choice
@@ -21,7 +22,12 @@ class IndexView(generic.ListView):
 
         return Question.objects.filter(
             pub_date__lte = now
-        ).order_by("-pub_date")[:5]
+        ).annotate(
+            num_choices=Count('choice')
+        ).filter(
+            num_choices__gt=1
+        ).distinct(
+        ).order_by("-pub_date" )[:5]
 
 
 class DetailView(generic.DetailView):
@@ -32,7 +38,13 @@ class DetailView(generic.DetailView):
 
         now = timezone.now()
 
-        return Question.objects.filter(pub_date__lte = now)
+        return Question.objects.annotate(
+            num_choices=Count('choice')
+        ).filter(
+            num_choices__gt=1
+        ).filter(
+            pub_date__lte = now
+        )
 
 
     
@@ -44,7 +56,11 @@ class ResultsView(generic.DetailView):
     def get_queryset(self):
         now = timezone.now()
 
-        return Question.objects.filter(pub_date__lte = now)
+        return Question.objects.annotate(
+            num_choices=Count('choice')
+        ).filter(
+            num_choices__gt=1
+        ).filter(pub_date__lte = now)
 
 def vote(request, question_id):
 
