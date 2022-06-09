@@ -118,11 +118,23 @@ class QuestionIndexViewTests(TestCase):
 
         self.assertContains(response, "No polls are available.")
 
-
-
-
-
+    def test_questions_with_one_choice(self):
+        """
+        The questions index page doesn't display questions with one choice
+        """
+        question = create_question(question_text="Past question 1.", days=-30)
     
+        choice = create_choice(question, "any choice")
+
+        response = self.client.get(reverse('polls:index'))
+        self.assertContains(response, "No polls are available.")
+        self.assertQuerysetEqual(
+            response.context['latest_question_list'],
+            [],
+        )
+   
+
+
 
 
 class QuestionModelTests(TestCase):
@@ -180,6 +192,8 @@ class QuestionDetailViewTests(TestCase):
         """
         future_question = create_question("Future question", 30)
 
+        choice1 = create_choice(future_question, "any choice")
+        choice2 = create_choice(future_question, "any choice")
 
         response = self.client.get(reverse("polls:detail",args=(future_question.id,)))
 
@@ -195,10 +209,27 @@ class QuestionDetailViewTests(TestCase):
 
         past_question = create_question("Old question", days = -1)
 
+        choice1 = create_choice(past_question, "any choice")
+        choice2 = create_choice(past_question, "any choice")
+
         response = self.client.get(reverse("polls:detail",args=(past_question.id,)))
 
         self.assertEqual(response.status_code,200)
         self.assertContains(response, past_question.question_text)
+
+    def test_question_with_no_choice(self):
+        """
+        The detail view of a question with a pub_date in the past
+        displays a 404 error
+        """
+
+        question = create_question("Old question", days = -1)
+
+
+        response = self.client.get(reverse("polls:detail",args=(question.id,)))
+
+        self.assertEqual(response.status_code,404)
+
 
 class QuestionResultViewTests(TestCase):
     def test_future_question(self):
@@ -207,6 +238,9 @@ class QuestionResultViewTests(TestCase):
         returns a 404 not found.
         """
         future_question = create_question("Future question", 30)
+
+        choice1 = create_choice(future_question, "any choice")
+        choice2 = create_choice(future_question, "any choice")
 
 
         response = self.client.get(reverse("polls:results",args=(future_question.id,)))
@@ -222,6 +256,9 @@ class QuestionResultViewTests(TestCase):
         """
 
         past_question = create_question("Old question", days = -1)
+
+        choice1 = create_choice(past_question, "any choice")
+        choice2 = create_choice(past_question, "any choice")
 
         response = self.client.get(reverse("polls:results",args=(past_question.id,)))
 
@@ -250,6 +287,18 @@ class QuestionResultViewTests(TestCase):
         self.assertQuerysetEqual(context_question.choice_set.all(),choices, ordered=False)
 
         
+    def test_question_with_no_choice(self):
+        """
+        The result view for a question with no choice choice
+        displays a 404 page
+        """
+        question = create_question(question_text="Any question", days=-2)
+
+        response = self.client.get(reverse("polls:results",args=(question.id,)))
+
+        self.assertEqual(response.status_code,404)
+    
+
 
 
 
