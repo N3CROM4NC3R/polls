@@ -37,7 +37,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1","0.0.0.0","localhost"]
+ALLOWED_HOSTS = ["127.0.0.1","0.0.0.0","localhost", "https://mysterious-oasis-89780.herokuapp.com/"]
 
 
 # Application definition
