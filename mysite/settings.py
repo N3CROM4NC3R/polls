@@ -145,6 +145,8 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CSRF_TRUSTED_ORIGINS = ['https://mysterious-oasis-89780.herokuapp.com']
+
 
 # Heroku settings
 import django_heroku
